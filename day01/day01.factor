@@ -5,13 +5,9 @@ IN: aoc2016.day01
 
 : read-input ( file -- str ) { "work/aoc2016/day01/" } swap suffix concat utf8 file-contents ;
 
-TUPLE: location x y orientation ;
-
 : parse-input ( str -- steps ) "," split [ [ blank? ] trim ] map ;
 
-: left-cmd? ( cmd -- ? ) first CHAR: L = ;
-
-: right-cmd? ( cmd -- ? ) first CHAR: R = ;
+TUPLE: location x y orientation ;
 
 : turn-left ( old -- new ) [ 1 - 4 rem ] change-orientation ;
 
