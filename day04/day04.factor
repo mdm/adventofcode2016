@@ -1,6 +1,6 @@
 ! Copyright (C) 2021 Your name.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: kernel sequences io.encodings.utf8 io.files splitting prettyprint accessors math.order sorting arrays math strings math.parser ;
+USING: kernel sequences io.encodings.utf8 io.files splitting prettyprint accessors math.order sorting arrays math strings math.parser assocs ;
 IN: aoc2016.day04
 
 TUPLE: room id chksum name ;
@@ -15,11 +15,9 @@ TUPLE: room id chksum name ;
 
 : calculate-checksum ( room -- room chksum ) dup name>> [ CHAR: - = not ] filter
     [ <=> ] sort
-    { } swap
-    [ 0 = [ 1 2array prefix ] [ [ dup first first ] dip dup [ = ] dip swap 
-        [ drop dup 0 swap [ [ first ] [ last 1 + ] bi 2array ] change-nth ]
-        [ 1 2array prefix ]
-    if ] if ] each-index
+    H{ } clone swap
+    [ over inc-at ] each
+    [ 2array ] { } assoc>map
     [ 2dup [ last ] bi@ = [ [ first ] bi@ <=> ] [ [ last ] bi@ swap <=> ] if ] sort
     [ first 1string ] map 5 short head concat ;
 
