@@ -18,7 +18,19 @@ IN: aoc2016.day09
 
 : part1 ( file -- ) read-input decompressed-length . ;
 
-: part2 ( file -- ) read-input . ;
+DEFER: decompressed-length-recursive
+
+: parse-marker-recursive ( data len -- rest newlen ) over [ CHAR: ) = ] find drop
+    swapd [ 1 + tail ] [ head rest ] 2bi
+    "x" split [ string>number ] map
+    [ first ] [ second ] bi
+    [ [ tail swap ] [ head decompressed-length-recursive ] 2bi ] dip * + ;
+
+: parse-next-recursive ( data len -- rest newlen ) over first CHAR: ( = [ parse-marker-recursive ] [ 1 + swap rest swap ] if ;
+
+: decompressed-length-recursive ( data -- n ) 0 [ over length 0 > ] [ parse-next-recursive ] while nip ;
+
+: part2 ( file -- ) read-input decompressed-length-recursive . ;
 
 : day09 ( -- ) "input.txt" [ part1 ] [ part2 ] bi ; 
 
