@@ -1,14 +1,18 @@
 ! Copyright (C) 2021 Your name.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: kernel sequences splitting io.encodings.utf8 io.files prettyprint math arrays accessors combinators ;
+USING: kernel sequences splitting io.encodings.utf8 io.files prettyprint math arrays accessors combinators sets vectors ;
 IN: aoc2016.day11
+
+TUPLE: move items from to ;
+
+TUPLE: state location steps floors ;
 
 : read-input ( file -- lines ) { "work/aoc2016/day11/" } swap suffix concat utf8 file-lines ;
 
 : parse-floor ( line -- floor )
     [ CHAR: . = ] trim
     " " split 4 tail
-    [ [ CHAR: , = ] trim ] map
+    [ [ CHAR: , = ] trim "-" " " replace ] map
     [ { "a" "and" "nothing" "relevant" } member? ] reject
     [ 2array ] map-index
     [ [ second even? ] filter ] [ [ second odd? ] filter ] bi
@@ -16,25 +20,28 @@ IN: aoc2016.day11
 
 : done? ( floors -- ? ) [ 3 = [ drop t ] [ empty? ] if ] map-index [ ] all? ;
 
-TUPLE: move item from to ;
-
-: add-item ( move floors -- floors )
+: add-items ( move floors -- floors )
     dup
     [
         [ dup to>> ] dip 
-        [ over item>> suffix ] change-nth
+        [ over items>> append ] change-nth
     ] dip nip ;
 
-: remove-item ( move floors -- floors )
+: remove-items ( move floors -- floors )
     dup
     [
         [ dup from>> ] dip 
-        [ over item>> swap remove ] change-nth
+        [ over items>> swap [ over member? ] reject nip ] change-nth
     ] dip nip ;
 
 : clone-floors ( floors -- newfloors ) [ clone ] map ;
 
-: make-move ( move floors -- newfloors ) dupd clone-floors remove-item add-item ;
+: make-move ( move state -- newstate )
+    [ drop to>> ]
+    [ nip steps>> 1 + ]
+    [ dupd floors>> clone-floors remove-items add-items ] 2tri
+    state boa
+    ;
 
 : item-combinations ( n floors -- combinations )
     nth
@@ -46,7 +53,49 @@ TUPLE: move item from to ;
     [ [ first 1array ] map ] dip
     append ;
 
-: part1 ( file -- ) read-input [ parse-floor ] map done? . ;
+: legal? ( state -- ? )
+    floors>>
+    [
+        dup
+        [ "generator" swap subseq? ] none?
+        swap dup
+        [ "microchip" swap subseq? ] filter
+        [ " " split first over [ " " split first over = ] count 2 = nip ] all? nip
+        or
+    ] all? ;
+
+: next-moves ( state -- moves )
+    dup
+    [ location>> ] [ floors>> ] bi item-combinations
+    [ over location>> dup 3 < [ swap [ over dup 1 + move boa ] map nip ] [ 2drop { } ] if ]
+    [ over location>> dup 0 > [ swap [ over dup 1 - move boa ] map nip ] [ 2drop { } ] if ] 2bi
+    nip
+    append
+    nip ;
+
+: min-steps ( floors -- n )
+    dup
+    HS{ } clone dup swapd adjoin
+    swap
+    [ 0 0 ] dip state boa
+    f ?push
+    [ dup first floors>> done? ]
+    [
+        dup first dup
+        next-moves [ over make-move ] map nip
+        [ legal? ] filter
+        [ floors>> pick in? ] reject
+        [ dup pick ?push drop floors>> pick adjoin ] each
+        rest
+    ] until
+    first steps>>
+    nip
+    ;
+
+: part1 ( file -- )
+    read-input [ parse-floor ] map
+    min-steps
+    . ;
 
 : part2 ( file -- ) read-input . ;
 
