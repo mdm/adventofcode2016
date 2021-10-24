@@ -1,6 +1,6 @@
 ! Copyright (C) 2021 Your name.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: kernel sequences splitting io.encodings.utf8 io.files prettyprint math arrays accessors combinators sets vectors ;
+USING: kernel sequences splitting io.encodings.utf8 io.files prettyprint math arrays accessors combinators sets vectors math.order sorting generalizations math.parser ;
 IN: aoc2016.day11
 
 TUPLE: move items from to ;
@@ -73,19 +73,35 @@ TUPLE: state location steps floors ;
     append
     nip ;
 
-: min-steps ( floors -- n )
+: to-key ( state -- key )
     dup
+    location>> number>string
+    swap
+    floors>>
+    dup
+    concat [ <=> ] sort
+    swap
+    [
+        over [ dup pick member? [ ] [ drop "#" ] if ] map nip
+    ] map
+    concat concat
+    nip
+    append ;
+
+: min-steps ( floors -- n )
+    [ 0 0 ] dip state boa
+    dup
+    to-key
     HS{ } clone dup swapd adjoin
     swap
-    [ 0 0 ] dip state boa
     f ?push
     [ dup first floors>> done? ]
     [
         dup first dup
         next-moves [ over make-move ] map nip
         [ legal? ] filter
-        [ floors>> pick in? ] reject
-        [ dup pick ?push drop floors>> pick adjoin ] each
+        [ to-key pick in? ] reject
+        [ dup pick ?push drop to-key pick adjoin ] each
         rest
     ] until
     first steps>>
@@ -97,8 +113,8 @@ TUPLE: state location steps floors ;
     min-steps
     . ;
 
-: part2 ( file -- ) read-input . ;
+: part2 ( file -- ) read-input drop ;
 
-: day11 ( -- ) "input.txt" [ part1 ] [ part2 ] bi ; 
+: day11 ( -- ) "test1.txt" [ part1 ] [ part2 ] bi ; 
 
 MAIN: day11
