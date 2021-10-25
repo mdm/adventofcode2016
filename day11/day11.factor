@@ -111,13 +111,18 @@ TUPLE: state location steps floors ;
     nip
     ;
 
-: part1 ( file -- )
+: part1 ( -- )
+    "input.txt"
     read-input [ parse-floor ] map
     min-steps
     . ;
 
-: part2 ( file -- ) read-input drop ;
+: part2 ( -- )
+    "input2.txt"
+    read-input [ parse-floor ] map
+    min-steps
+    . ;
 
-: day11 ( -- ) "test1.txt" [ part1 ] [ part2 ] bi ; 
+: day11 ( -- ) part1 part2 ; 
 
 MAIN: day11
