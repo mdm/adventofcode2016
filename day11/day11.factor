@@ -3,6 +3,8 @@
 USING: kernel sequences splitting io.encodings.utf8 io.files prettyprint math arrays accessors combinators sets dlists deques math.order sorting generalizations math.parser ;
 IN: aoc2016.day11
 
+TUPLE: item isotope type ;
+
 TUPLE: move items from to ;
 
 TUPLE: state location steps floors ;
@@ -15,8 +17,8 @@ TUPLE: state location steps floors ;
     [ [ CHAR: , = ] trim "-" " " replace ] map
     [ { "a" "and" "nothing" "relevant" } member? ] reject
     [ 2array ] map-index
-    [ [ second even? ] filter ] [ [ second odd? ] filter ] bi
-    [ [ first ] bi@ " " swap append append ] 2map ;
+    [ second even? ] partition
+    [ [ first ] bi@ first swap " " split first swap item boa ] 2map ;
 
 : done? ( floors -- ? ) [ 3 = [ drop t ] [ empty? ] if ] map-index [ ] all? ;
 
@@ -57,10 +59,10 @@ TUPLE: state location steps floors ;
     floors>>
     [
         dup
-        [ "generator" swap subseq? ] none?
-        swap dup
-        [ "microchip" swap subseq? ] filter
-        [ " " split first over [ " " split first over = ] count 2 = nip ] all? nip
+        [ type>> CHAR: m = ] partition
+        length 0 =
+        -rot
+        [ isotope>> over [ isotope>> over = ] count 2 = nip ] all? nip
         or
     ] all? ;
 
@@ -73,16 +75,18 @@ TUPLE: state location steps floors ;
     append
     nip ;
 
+: item-string ( item -- str ) [ isotope>> ] [ type>> ] bi suffix ;
+
 : to-key ( state -- key )
     dup
     location>> number>string
     swap
     floors>>
     dup
-    concat [ <=> ] sort
+    concat [ [ item-string ] bi@ <=> ] sort
     swap
     [
-        over [ dup pick member? [ ] [ drop "#" ] if ] map nip
+        over [ dup pick member? [ item-string ] [ drop "#" ] if ] map nip
     ] map
     concat concat
     nip
