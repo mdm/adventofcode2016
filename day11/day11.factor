@@ -1,6 +1,6 @@
 ! Copyright (C) 2021 Your name.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: kernel sequences splitting io.encodings.utf8 io.files prettyprint math arrays accessors combinators sets vectors math.order sorting generalizations math.parser ;
+USING: kernel sequences splitting io.encodings.utf8 io.files prettyprint math arrays accessors combinators sets dlists deques math.order sorting generalizations math.parser ;
 IN: aoc2016.day11
 
 TUPLE: move items from to ;
@@ -94,17 +94,16 @@ TUPLE: state location steps floors ;
     to-key
     HS{ } clone dup swapd adjoin
     swap
-    f ?push
-    [ dup first floors>> done? ]
+    DL{ } clone dup swapd push-back
+    [ dup peek-front floors>> done? ]
     [
-        dup first dup
+        dup pop-front dup
         next-moves [ over make-move ] map nip
         [ legal? ] filter
         [ to-key pick in? ] reject
-        [ dup pick ?push drop to-key pick adjoin ] each
-        rest
+        [ dup pick push-back to-key pick adjoin ] each
     ] until
-    first steps>>
+    pop-front steps>>
     nip
     ;
 
