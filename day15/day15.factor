@@ -25,6 +25,7 @@ TUPLE: disc number positions start ;
             [ number>> ]
             [ start>> ] tri
             +
+            neg
             over rem
             [ rem ] dip
             =
@@ -57,6 +58,9 @@ TUPLE: disc number positions start ;
 : part2 ( file -- )
     read-input
     [ parse-disc ] map
+    dup length 1 +
+    11 0 disc boa
+    suffix
     first-time
     . ;
 
