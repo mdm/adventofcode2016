@@ -154,14 +154,15 @@ TUPLE: state empty target steps nodes ;
     +
     1 <= ;
 
-: done? ( state -- ? ) dup target>> { 0 0 } = swap steps>> 11 >= or ;
+: done? ( state -- ? ) target>> { 0 0 } = ;
 
 : update-state ( node state -- newstate )
-    [
-        [ dup id>> ] dip
-        clone dup
-        [ set-at ] dip
-    ] change-nodes ;
+    swap
+    dup id>>
+    pick nodes>>
+    dup   
+    [ set-at ] dip
+    >>nodes ;
 
 : make-move ( move state -- newstate )
     clone
@@ -190,9 +191,28 @@ TUPLE: state empty target steps nodes ;
     over
     id>>
     >>empty
+    [
+        >alist
+        >hashtable
+    ] change-nodes
     update-state
     update-state
     [ 1 + ] change-steps ;
+
+: adjacent-nodes ( state -- nodes )
+    [ nodes>> ]
+    [ empty>> ] bi
+    { { 0 -1 } { 1 0 } { 0 1 } { -1 0 } }
+    [
+        over
+        [ + ] 2map
+    ] map
+    [ over at ] dip
+    [ pick key? ] filter
+    [
+        pick at
+    ] map
+    2nip ;
 
 : adjacent-pairs ( state -- pairs )
     [ nodes>> ]
@@ -222,13 +242,21 @@ TUPLE: state empty target steps nodes ;
         [ last number>string ] bi
         "x" swap
         append append
+        "@" append
     ]
     [
-        nodes>>
+        empty>>
+        [ first number>string ]
+        [ last number>string ] bi
+        "x" swap
+        append append
+        "@" append
+    ]
+    [
+        adjacent-nodes
         [ used>> number>string ] map
         "-" join
-    ] bi
-    "@" swap
+    ] tri
     append append ;
 
 : min-steps ( nodes -- n )
