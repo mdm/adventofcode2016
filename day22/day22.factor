@@ -102,11 +102,26 @@ TUPLE: node id size used avail percent ;
     length
     . ;
 
-TUPLE: state target steps nodes ;
+TUPLE: state empty target steps nodes ;
 
 : initial-state ( nodes -- state )
     dup
     [
+        dup
+        id>>
+        swap
+        2array
+    ] map
+    >hashtable
+    [
+        dup
+        [
+            used>>
+            0 =
+        ] find
+        nip 
+        id>>
+        swap
         [ id>> last 0 = ] filter
         [ id>> first ] map
         [ swap <=> ] sort
@@ -142,17 +157,11 @@ TUPLE: state target steps nodes ;
 : done? ( state -- ? ) dup target>> { 0 0 } = swap steps>> 11 >= or ;
 
 : update-state ( node state -- newstate )
-    dup swapd
-    nodes>>
     [
-        dup id>>
-        pick id>>
-        =
-        [ drop dup ] when
-    ] map
-    swapd
-    >>nodes
-    nip ;
+        [ dup id>> ] dip
+        clone dup
+        [ set-at ] dip
+    ] change-nodes ;
 
 : make-move ( move state -- newstate )
     clone
@@ -167,8 +176,7 @@ TUPLE: state target steps nodes ;
         >>used
         swap first
         0 >>used
-    ]
-    dip
+    ] dip
     2dup
     target>>
     swap
@@ -179,43 +187,32 @@ TUPLE: state target steps nodes ;
         id>>
         >>target
     ] when
+    over
+    id>>
+    >>empty
     update-state
     update-state
     [ 1 + ] change-steps ;
 
-: all-adjacent-pairs ( nodes -- pairs )
-    dup
+: adjacent-pairs ( state -- pairs )
+    [ nodes>> ]
+    [ empty>> ] bi
+    { { 0 -1 } { 1 0 } { 0 1 } { -1 0 } }
     [
-        dup
-        id>>
-        swap
+        over
+        [ + ] 2map
+    ] map
+    [ over at ] dip
+    [ pick key? ] filter
+    [
+        pick at
+        over
         2array
     ] map
-    >hashtable
-    swap
-    [
-        dup
-        id>>
-        { { 0 -1 } { 1 0 } { 0 1 } { -1 0 } }
-        [
-            over
-            [ + ] 2map
-        ] map
-        nip
-        [ pick key? ] filter
-        [
-            pick at
-            over
-            2array
-        ] map
-        nip
-    ] map
-    nip
-    concat ;
+    2nip ;
 
 : next-moves ( state -- moves )
-    nodes>>
-    all-adjacent-pairs
+    adjacent-pairs
     [ viable? ] filter ;
 
 : to-key ( state -- key )
