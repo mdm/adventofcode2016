@@ -141,8 +141,6 @@ TUPLE: state target steps nodes ;
 
 : done? ( state -- ? ) target>> { 0 0 } = ;
 
-: clone-floors ( floors -- newfloors ) [ clone ] map ;
-
 : update-state ( node state -- newstate )
     dup swapd
     nodes>>
@@ -157,7 +155,9 @@ TUPLE: state target steps nodes ;
     nip ;
 
 : make-move ( move state -- newstate )
+    clone
     [
+        [ clone ] map
         dup
         [ first used>> ]
         [ last used>> ] bi
@@ -166,8 +166,7 @@ TUPLE: state target steps nodes ;
         swap
         >>used
         swap first
-        0
-        >>used
+        0 >>used
     ]
     dip
     2dup
@@ -181,7 +180,8 @@ TUPLE: state target steps nodes ;
         >>target
     ] when
     update-state
-    update-state ;
+    update-state
+    [ 1 + ] change-steps ;
 
 : next-moves ( state -- moves )
     nodes>>
@@ -226,10 +226,7 @@ TUPLE: state target steps nodes ;
 : part2 ( file -- )
     read-input
     parse-input
-    all-pairs
-    [ viable? ] filter
-    [ adjacent? ] filter
-    length
+    min-steps
     . ;
 
 : day22 ( -- ) "input.txt" [ part1 ] [ part2 ] bi ; 
