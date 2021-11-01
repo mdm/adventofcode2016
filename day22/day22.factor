@@ -1,6 +1,6 @@
 ! Copyright (C) 2021 Your name.
 ! See http://factorcode.org/license.txt for BSD license.
-USING: kernel sequences io.encodings.utf8 io.files prettyprint splitting combinators math math.parser accessors arrays sets dlists deques math.order sorting ;
+USING: kernel sequences io.encodings.utf8 io.files prettyprint splitting combinators math math.parser accessors arrays sets dlists deques math.order sorting hashtables assocs ;
 IN: aoc2016.day22
 
 TUPLE: node id size used avail percent ;
@@ -139,7 +139,7 @@ TUPLE: state target steps nodes ;
     +
     1 <= ;
 
-: done? ( state -- ? ) target>> { 0 0 } = ;
+: done? ( state -- ? ) dup target>> { 0 0 } = swap steps>> 11 >= or ;
 
 : update-state ( node state -- newstate )
     dup swapd
@@ -183,11 +183,40 @@ TUPLE: state target steps nodes ;
     update-state
     [ 1 + ] change-steps ;
 
+: all-adjacent-pairs ( nodes -- pairs )
+    dup
+    [
+        dup
+        id>>
+        swap
+        2array
+    ] map
+    >hashtable
+    swap
+    [
+        dup
+        id>>
+        { { 0 -1 } { 1 0 } { 0 1 } { -1 0 } }
+        [
+            over
+            [ + ] 2map
+        ] map
+        nip
+        [ pick key? ] filter
+        [
+            pick at
+            over
+            2array
+        ] map
+        nip
+    ] map
+    nip
+    concat ;
+
 : next-moves ( state -- moves )
     nodes>>
-    all-pairs
-    [ viable? ] filter
-    [ adjacent? ] filter ;
+    all-adjacent-pairs
+    [ viable? ] filter ;
 
 : to-key ( state -- key )
     [
