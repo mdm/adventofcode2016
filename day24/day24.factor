@@ -3,7 +3,7 @@
 USING: kernel sequences splitting io.encodings.utf8 io.files prettyprint math arrays accessors combinators sets dlists deques math.order sorting generalizations math.parser strings ;
 IN: aoc2016.day24
 
-TUPLE: state map location required done steps ;
+TUPLE: state map start location required done steps ;
 
 : read-input ( file -- lines ) { "work/aoc2016/day24/" } swap suffix concat utf8 file-lines ;
 
@@ -21,6 +21,7 @@ TUPLE: state map location required done steps ;
         concat
         [ first CHAR: 0 = ] filter
         first rest
+        dup
     ]
     [
         concat
@@ -125,9 +126,38 @@ TUPLE: state map location required done steps ;
     min-steps
     . ;
 
+: done2? ( state -- ? )
+    {
+        [ required>> ]
+        [ done>> ]
+        [ start>> ]
+        [ location>> ]
+    } cleave
+    [ = ] 2bi@
+    and ;
+
+: min-steps2 ( floors -- n )
+    initial-state
+    dup
+    to-key
+    HS{ } clone dup swapd adjoin
+    swap
+    DL{ } clone dup swapd push-back
+    [ dup peek-front done2? ]
+    [
+        dup pop-front dup
+        next-moves [ over make-move ] map nip
+        [ legal? ] filter
+        [ to-key pick in? ] reject
+        [ dup pick push-back to-key pick adjoin ] each
+    ] until
+    pop-front steps>>
+    nip
+    ;
+
 : part2 ( file -- )
     read-input
-    min-steps
+    min-steps2
     . ;
 
 : day24 ( -- ) "input.txt" [ part1 ] [ part2 ] bi ; 
